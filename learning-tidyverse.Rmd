@@ -1,0 +1,76 @@
+---
+title: "TDS-learningtidyverse"
+author: "Hazel"
+date: "2020/2/9"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#file.edit("learning-tidyverse.R")
+
+#install.packages("tidyverse")
+library("tidyverse")
+#install.packages("nycflights13")
+
+u=paste0("http://github.com/ITSLeeds/TDS/","raw/master/sample-data/everyone.csv")
+d=read.csv(u)
+
+d$n_coffee_yr=d$n_coffee*52
+
+#Filter-out only those who travel by bus
+coffee_bus=filter(d,like_bus_travel=="TRUE") 
+mean_coffee_bus=mean(coffee_bus$n_coffee)
+
+#Create a new dataset that keeps only the person_name and n_coffee_yr variables
+newdf=select(d,person_name,n_coffee_yr)
+
+#do those who travel by bus drink more or less coffee than those who do not?
+#(1)
+non_coffee_bus=filter(d,like_bus_travel!="TRUE") 
+mean_non_coffee_bus=mean(non_coffee_bus$n_coffee)
+#(2)
+d %>%
+  group_by(like_bus_travel)%>%
+  summarise(mean_coffee=mean(n_coffee))
+
+#Processing a big file and basic visualisation
+
+library("nycflights13")
+names(flights)
+
+flights_sample=sample_n(flights,10000)#random sample
+unique(flights$carrier)
+f=filter(flights_sample,grepl(pattern="UA|AA|DL",carrier))#grepl returns rows
+
+#ggplot
+ggplot(f)+
+  geom_point(aes(air_time,distance,colour=carrier),alpha=0.2)
+
+#find the average air time of those flights with a distance of 1000 to 2000 miles
+mean(f$air_time[f$distance>=1000&f$distance<=2000],na.rm = T)
+
+f%>%
+  filter(distance>=1000&distance<=2000)%>%
+     summarise(mean(air_time,na.rm = T))
+
+#find the relationship between flight distance and time
+flm=na.omit(f)
+m=lm(air_time~distance,data=flm)
+flm$relation_airtime_distance=m$fitted.values
+# smoothline
+ggplot(flm)+
+  geom_point(aes(air_time,distance,colour=carrier),alpha=0.2)+
+  geom_smooth(aes(air_time,distance),method="lm",se=F,colour="black")
+
+```
+
